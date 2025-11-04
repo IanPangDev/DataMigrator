@@ -1,5 +1,5 @@
 from vista import Vista
-from factory import SQLserver_to_SQLserver
+from factory import SQLserver_to_SQLserver, Hive_to_SQLserver
 
 class Controlador:
     def __init__(self):
@@ -8,7 +8,7 @@ class Controlador:
     def cambiar_vista(self, clave: str):
         datos = {
             "sql_serverxsql_server": lambda: self.vista.mostrar_sql_server_to_sql_server(),
-            "hadoopxsql_server": lambda: self.vista.mostrar_hadoop_to_sql_server(),
+            "hivexsql_server": lambda: self.vista.mostrar_hive_to_sql_server(),
             "oraclexsql_server": lambda: self.vista.mostrar_oracle_to_sql_server()
         }
         datos[clave]()
@@ -16,7 +16,7 @@ class Controlador:
     def define_motores(self, clave: str):
         datos = {
             "sql_serverxsql_server": SQLserver_to_SQLserver(),
-            "hadoopxsql_server": SQLserver_to_SQLserver(),
+            "hivexsql_server": Hive_to_SQLserver(),
             "oraclexsql_server": SQLserver_to_SQLserver()
         }
         self.factory = datos[clave]

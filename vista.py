@@ -32,12 +32,12 @@ class Vista(ctk.CTk):
         )
         self.slqServer_sqlServer.pack(pady=10, padx=15, fill='x')
 
-        self.hadoop_sqlServer = ctk.CTkButton(
+        self.hive_sqlServer = ctk.CTkButton(
             self.sidebar,
-            text="Hadoop a SQL Server",
-            command=lambda: self.controlador.cambiar_vista("hadoopxsql_server")
+            text="Hive a SQL Server",
+            command=lambda: self.controlador.cambiar_vista("hivexsql_server")
         )
-        self.hadoop_sqlServer.pack(pady=10, padx=15, fill='x')
+        self.hive_sqlServer.pack(pady=10, padx=15, fill='x')
 
         self.oracle_sqlServer = ctk.CTkButton(
             self.sidebar,
@@ -113,9 +113,9 @@ class Vista(ctk.CTk):
         )
         self.boton_migrador.grid(row=7, column=2, columnspan=2, padx=40, pady=40, sticky='nsew')
 
-    def mostrar_hadoop_to_sql_server(self):
+    def mostrar_hive_to_sql_server(self):
         self.color = "#E07E29"
-        self.label_contenido.configure(text='Migracion de Hadoop a SQL Server',
+        self.label_contenido.configure(text='Migracion de Hive a SQL Server',
                                     font=('Segoe UI', 16, 'bold'),
                                     bg_color=self.color)
         self.__plantilla_form()
