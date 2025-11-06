@@ -9,7 +9,7 @@ DataMigrator es una aplicación de escritorio desarrollada en Python que permite
 
 * SQL Server ↔ SQL Server
 
-* Hadoop → SQL Server
+* Hive → SQL Server
 
 La aplicación implementa el patrón Factory para la creación dinámica de conectores y el patrón MVC para estructurar la lógica de negocio, control y vista de la interfaz gráfica (GUI).
 
@@ -17,7 +17,7 @@ La aplicación implementa el patrón Factory para la creación dinámica de cone
 
 ## 🚀 Características
 
-* 🔄 Migración entre diferentes motores (Oracle, SQL Server, Hadoop).
+* 🔄 Migración entre diferentes motores (Oracle, SQL Server, Hive).
 
 * 🏗️ Arquitectura basada en patrones de diseño:
 
@@ -35,17 +35,39 @@ La aplicación implementa el patrón Factory para la creación dinámica de cone
 
 ---
 
+## ⚙️ Requisitos
+
+Para ejecutar correctamente DataMigrator, asegúrate de tener instalados los siguientes componentes:
+
+* Python 3.13.5+
+
+* Java 8 o superior (requerido para conectores basados en JDBC, como Oracle o Hadoop)
+
+* Librerías listadas en requirements.txt
+
+Variable de entorno JAVA_HOME correctamente configurada, apuntando al directorio de instalación de Java
+
+---
+
 ## 🧱 Estructura del proyecto
 
 ```
 DataMigrator/
 │
-├── factory             # Carpeta con modelos factory
-├── script              # Carpeta con scripts sql de prueba
-├── sql_server          # Carpeta con docker compose para BD de prueba
-├── controlador.py      # Clase controlador
-├── vista.py            # Clase vista
-├── requirements.txt    # Librerias a usar
-├── README.md           
-└── main.py             # Ejecutable principal
+├── app/                    # Carpeta de la app
+│   ├── controlador.py
+│   ├── vista.py
+│   └── factory/            # Modelos para las migraciones
+│        ├── ....py          
+│        └── drivers/       # Carpeta de drivers
+│
+├── script/                 # Carpeta con scripts sql de prueba
+├── containers/             # Carpeta con los contenedores para pruebas
+│    ├── hive 
+│    └── sql_server 
+│
+├── requirements.txt        # Librerias a usar
+├── init.bat                # Script para iniciar contenedores
+├── README.md               
+└── main.py                 # Ejecutable principal
 ```

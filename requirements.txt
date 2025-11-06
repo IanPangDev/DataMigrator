@@ -1,3 +1,4 @@
 pyodbc==5.3.0
 oracledb==3.4.0
 customtkinter==5.2.2
+JayDeBeApi==1.2.3

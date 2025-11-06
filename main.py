@@ -1,4 +1,4 @@
-from controlador import Controlador
+from app.controlador import Controlador
 
 if __name__ == "__main__":
     app = Controlador()
