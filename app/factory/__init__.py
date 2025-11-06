@@ -1,0 +1,4 @@
+from app.factory.Oracle_to_SQLserver import Oracle_to_SQLserver
+from app.factory.SQLserver_to_SQLserver import SQLserver_to_SQLserver
+from app.factory.Hive_to_SQLserver import Hive_to_SQLserver
+from app.factory.Migrador import Migrador
