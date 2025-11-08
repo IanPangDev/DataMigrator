@@ -7,29 +7,8 @@ class SQLserver_to_SQLserver(Migrador):
         """
         Contructor de la clase
         """
-        # # mapa de conversiones
-        # self.conversiones = {
-        #     DB_TYPE_CHAR: lambda data: f"CHAR({data['data_length']})",
-        #     DB_TYPE_VARCHAR: lambda data: f"VARCHAR({data['data_length']})",
-        #     DB_TYPE_NUMBER: lambda data: (
-        #         f"NUMERIC({data['data_precision']},{data['data_scale']})"
-        #         if data['data_precision'] is not None and data['data_scale'] is not None
-        #         else "INT"
-        #     ),
-        #     DB_TYPE_DATE: lambda data: "DATETIME2",
-        #     DB_TYPE_CLOB: lambda data: "TEXT",
-        #     DB_TYPE_BOOLEAN: lambda data: "BOOL",
-        #     DB_TYPE_NVARCHAR: lambda data: lambda data: f"VARCHAR({data['data_length']})"
-        # }
         # mapa de credenciales
         self.credenciales = None
-        # conectores
-        self.conn_orig = None
-        self.conn_dst = None
-        # tablas
-        self.tablas = None
-        # definicion catalogos o deltas
-        self.catalogo_delta = None
 
     def define_credenciales(self,
                             usr_orig: str,
@@ -57,46 +36,6 @@ class SQLserver_to_SQLserver(Migrador):
             'dns_dst': dns_dst,
             'db_dst': db_dst
         }
-    
-    def define_tablas(self, tablas: dict, excluye: list = []):
-        """
-        Metodo que define las tablas a migrar
-        Args:
-            # tablas: diccionario con estructura
-                    [
-                        { 
-                        'nombre tabla': [
-                                            "query Oracle",
-                                            "query SQL Server"
-                                        ] 
-                        },
-                        ...
-                    ]
-            # excluye: lista de tipos de datos excluidos
-        """
-        pass
-
-    def conecta(self, driver_oracle: str) -> None:
-        """
-        Metodo que realiza la conexion a ambas bases de datos
-        Args:
-            # driver_oracle: path del driver para oracle
-        """
-        pass
-
-    def crea_tablas(self):
-        """
-        Metodo que crea las tablas en SQL Server
-        """
-        pass
-
-    def actualiza_conversiones(self, conversiones: dict):
-        """
-        Metodo que define las conversiones de tipos de dato
-        Args:
-            # conversiones: diccionario de conversiones
-        """
-        pass
 
     def migrar(self, query_select: str, tabla_dst: str) -> dict:
         """
@@ -154,12 +93,6 @@ class SQLserver_to_SQLserver(Migrador):
     def revisa_integridad(self) -> None:
         """
         Metodo que revisa la integridad de los datos migrados
-        """
-        pass           
-
-    def desconecta(self) -> None:
-        """
-        Metodo que desconecta las conexiones a ambas bases de datos
         """
         pass
 
