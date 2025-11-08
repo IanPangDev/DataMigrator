@@ -1,5 +1,5 @@
 from app.vista import Vista
-from app.factory import SQLserver_to_SQLserver, Hive_to_SQLserver
+from app.factory import SQLserver_to_SQLserver, Hive_to_SQLserver, Oracle_to_SQLserver
 
 class Controlador:
     def __init__(self):
@@ -17,7 +17,7 @@ class Controlador:
         datos = {
             "sql_serverxsql_server": SQLserver_to_SQLserver(),
             "hivexsql_server": Hive_to_SQLserver(),
-            "oraclexsql_server": SQLserver_to_SQLserver()
+            "oraclexsql_server": Oracle_to_SQLserver()
         }
         self.factory = datos[clave]
         

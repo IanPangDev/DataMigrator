@@ -124,7 +124,7 @@ class Vista(ctk.CTk):
         # Etiqueta y campo para dns origen
         label_dns_orig = self.__label_form("DNS:", 12)
         label_dns_orig.grid(row=5, column=0, padx=10, pady=10, sticky='e')
-        self.dns_orig = self.__entry_form('localhost:1433')
+        self.dns_orig = self.__entry_form('localhost:1521')
         self.dns_orig.grid(row=5, column=1, padx=10, pady=10)
     
     def pedir_archivo(self):
@@ -322,7 +322,7 @@ class Vista(ctk.CTk):
         if clave != 'hivexsql_server':
             self.db_orig = self.__entry_form('master')
         else:
-            self.db_orig = self.__entry_form('default', 'disable')
+            self.db_orig = self.__entry_form('', 'disable')
         self.db_orig.grid(row=4, column=1, padx=10, pady=10)
     
         # Label de destino
