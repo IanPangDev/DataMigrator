@@ -1,0 +1,16 @@
+-- sqlplus sys as sysdba
+-- CREATE USER C##ian IDENTIFIED BY admin123;
+-- GRANT DBA, CREATE SESSION TO C##ian;
+
+CREATE TABLE Test (
+    id INT,
+    name VARCHAR(100) NOT NULL
+);
+
+INSERT INTO TEST (ID, NAME)
+SELECT LEVEL AS ID,
+    'Name ' || LEVEL AS NAME
+FROM DUAL
+CONNECT BY LEVEL <= 100;
+
+SELECT * FROM Test;

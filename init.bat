@@ -6,7 +6,7 @@ echo   Iniciando los Docker Compose indicados
 echo ========================================
 echo.
 
-set folders=containers\hive containers\sql_server
+set folders=containers\hive containers\sql_server containers\oracle
 
 for %%d in (%folders%) do (
     echo Ejecutando en %%d ...

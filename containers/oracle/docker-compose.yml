@@ -1,0 +1,15 @@
+services:
+  oracledb:
+    image: container-registry.oracle.com/database/free:latest
+    container_name: oracledb
+    environment:
+      ORACLE_PWD: admin123
+      ORACLE_ALLOW_REMOTE: "true"
+    ports:
+      - "1521:1521"   # Puerto de Oracle Database
+      - "5500:5500"   # Puerto de Oracle Enterprise Manager
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+
+volumes:
+  oracle_data:
