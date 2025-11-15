@@ -41,7 +41,9 @@ Para ejecutar correctamente DataMigrator, asegúrate de tener instalados los sig
 
 * Python 3.13.5+
 
-* Java 8 o superior (requerido para conectores basados en JDBC, como Oracle o Hadoop)
+* Java 8 o superior (requerido para conectores basados en JDBC, como Oracle o Hive)
+
+* Driver de conexión para Oracle (instantclient_23_9)
 
 * Librerías listadas en requirements.txt
 
@@ -59,7 +61,7 @@ DataMigrator/
 │   ├── vista.py
 │   └── factory/            # Modelos para las migraciones
 │        ├── ....py          
-│        └── drivers/       # Carpeta de drivers
+│        └── drivers/       # Carpeta de drivers (Oracle y Hive)
 │
 ├── script/                 # Carpeta con scripts sql de prueba
 ├── containers/             # Carpeta con los contenedores para pruebas

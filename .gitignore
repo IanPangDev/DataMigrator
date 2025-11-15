@@ -1,2 +1,3 @@
 **/__pycache__
 app/factory/drivers/instantclient_23_9/*
+!app/factory/drivers/instantclient_23_9/.gitkeep
