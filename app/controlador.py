@@ -1,5 +1,7 @@
 from app.vista import Vista
 from app.factory import SQLserver_to_SQLserver, Hive_to_SQLserver, Oracle_to_SQLserver
+from threading import Thread
+from datetime import datetime
 
 class Controlador:
     def __init__(self):
@@ -20,10 +22,25 @@ class Controlador:
             "oraclexsql_server": Oracle_to_SQLserver()
         }
         self.factory = datos[clave]
-        
-    def migrar(self, query_select: str, tabla_dst: str) -> dict:
-        return self.factory.migrar(query_select, tabla_dst)
-    
+
+    def migrar(self, query_select: str, tabla_dst: str):
+        # Mostrar ventana con logs
+        logs = self.vista.mostrar_logs()
+
+        # -------------------------
+        #   HILO DE MIGRACIÓN
+        # -------------------------
+        def migracion_hilo():
+            logs.insert("end", f"[{datetime.now()}] MIGRACIÓN EMPEZADA a {tabla_dst}\n")
+            self.factory.migrar(query_select, tabla_dst, logs)
+            logs.see("end")
+
+        # Lanzar hilo
+        hilo_migracion = Thread(target=migracion_hilo, daemon=True)
+        hilo_migracion.start()
+
+        return
+
     def verifica_conexion(self,
                         usr_orig: str,
                         pwd_orig: str,
