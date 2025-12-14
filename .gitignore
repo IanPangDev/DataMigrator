@@ -1,3 +1,7 @@
 **/__pycache__
+**/*.db
 app/factory/drivers/instantclient_23_9/*
 !app/factory/drivers/instantclient_23_9/.gitkeep
+script/dns_hive.txt
+hive.sql
+query_referencias.sql

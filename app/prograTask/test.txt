@@ -1,0 +1,3 @@
+python programTask.py --mode 0 --name MyTESTApp --periodo diario --db_orig db_origen_fake --db_dst db_destino_fake --usr_orig usuario_origen --usr_dst usuario_destino --pwd_orig pwd1234! --pwd_dst dstPwd5678! --dns_orig origen.fake.local --dns_dst destino.fake.local --query_path /home/fakeuser/queries/query.sql --tabla_dst tabla_resultados_fake
+
+schtasks /query | find "MyTESTApp"
