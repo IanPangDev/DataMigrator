@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import filedialog
+from typing import Tuple
 
 class Vista(ctk.CTk):
     def __init__(self, controlador):
@@ -140,16 +141,16 @@ class Vista(ctk.CTk):
                 self.query = f.read()
     
     def __button_migrador(self):
-        salida = self.controlador.migrar(self.query, self.table_dst.get().strip())
-        match salida.get('key'):
-            case 1:
-                self.mostrar_aviso(f'Conexion fallida en origen\n\n{salida['error']}', 1)
-            case 2:
-                self.mostrar_aviso(f'Conexion fallida en destino\n\n{salida['error']}', 1)
-            case 3:
-                self.mostrar_aviso(f'Migración fallida\n\n{salida['error']}', 1)
-            case _:
-                self.mostrar_aviso('Migración exitosa', 0)
+        self.controlador.migrar(self.query, self.table_dst.get().strip())
+        # match salida.get('key'):
+        #     case 1:
+        #         self.mostrar_aviso(f'Conexion fallida en origen\n\n{salida['error']}', 1)
+        #     case 2:
+        #         self.mostrar_aviso(f'Conexion fallida en destino\n\n{salida['error']}', 1)
+        #     case 3:
+        #         self.mostrar_aviso(f'Migración fallida\n\n{salida['error']}', 1)
+        #     case _:
+        #         pass
     
     def __button_form_conexion(self, clave: str):
         return ctk.CTkButton(
@@ -167,6 +168,8 @@ class Vista(ctk.CTk):
             self.dns_dst: 'DNS destino',
             self.table_dst: 'Tabla destino'
         }
+        if clave == 'hivexsql_server':
+            datos_form.pop(self.db_orig)
         errores = [text for v, text in datos_form.items() if v.get().strip() == '']
         if not self.query:
             errores.append('Query')
@@ -276,6 +279,41 @@ class Vista(ctk.CTk):
             width=100,
         )
         boton_ok.pack(pady=(5, 15))
+
+    def mostrar_logs(self) -> ctk.CTkTextbox:
+        popup = ctk.CTkToplevel(self)
+        popup.title("Logs")
+        popup.resizable(False, False)
+        popup.update_idletasks()
+
+        # Centrar popup en la pantalla
+        pantalla_ancho = popup.winfo_screenwidth()
+        pantalla_alto = popup.winfo_screenheight()
+        base_height = int(pantalla_alto * 0.7)
+        base_width = int(pantalla_ancho * 0.5)
+
+        x = (pantalla_ancho // 2) - (base_width // 2)
+        y = (pantalla_alto // 2) - (base_height // 2)
+
+        popup.geometry(f"{base_width}x{base_height}+{x}+{y}")
+
+        # ----- Frame principal -----
+        frame = ctk.CTkFrame(popup, fg_color=None, corner_radius=10)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # ----- Textbox grande ocupando la parte superior -----
+        text_logs = ctk.CTkTextbox(
+            frame,
+            width=580,
+            height=700
+        )
+        text_logs.pack(fill="both", expand=True, padx=10, pady=(10, 5))
+
+        popup.attributes("-topmost", True)
+        popup.lift()
+        popup.after(200, lambda: popup.attributes("-topmost", False))
+
+        return text_logs
 
     def __label_form(self, text: str, size: int) -> ctk.CTkLabel:
         return ctk.CTkLabel(

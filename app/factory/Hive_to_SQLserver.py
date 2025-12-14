@@ -1,6 +1,8 @@
 from app.factory.Migrador import Migrador
 import jaydebeapi
 import pyodbc
+from customtkinter import CTkTextbox
+from datetime import datetime
 
 class Hive_to_SQLserver(Migrador):
 
@@ -38,25 +40,24 @@ class Hive_to_SQLserver(Migrador):
             'db_dst': db_dst
         }
 
-    def actualiza_conversiones(self, conversiones: dict):
-        """
-        Metodo que define las conversiones de tipos de dato
-        Args:
-            # conversiones: diccionario de conversiones
-        """
-        pass
-
-    def migrar(self, query_select: str, tabla_dst: str) -> dict:
+    def migrar(self, query_select: str, tabla_dst: str, logs: CTkTextbox) -> None:
         """
         Realiza la migración por lotes (batch) de 10,000 registros.
-        Devuelve un diccionario con el estado:
-            {'key': 0, 'error': None} en caso de éxito
-            {'key': 1, 'error': <mensaje>} en caso de error
         """
         try:
             verifica = self.verifica_conexion()
             if verifica['key'] != 0:
-                return {"key": verifica['key'], "error": verifica['error']}
+                match verifica.get('key'):
+                    case 1:
+                        logs.insert('end', f'[{datetime.now()}] Conexion fallida en origen\n\n{verifica['error']}')
+                        logs.configure(fg_color="#831616")
+                    case 2:
+                        logs.insert('end', f'[{datetime.now()}] Conexion fallida en destino\n\n{verifica['error']}')
+                        logs.configure(fg_color="#831616")
+                    case _:
+                        pass
+                logs.yview('end')
+                return
 
             with jaydebeapi.connect(
                 "org.apache.hive.jdbc.HiveDriver",
@@ -83,8 +84,8 @@ class Hive_to_SQLserver(Migrador):
                 # Obtienes los nombres de las columnas directamente desde la query
                 columnas_destino = [desc[0].split('.')[-1] for desc in cursor_orig.description]
 
-                columnas_str = ", ".join(columnas_destino)
-                placeholders = ", ".join(["?"] * len(columnas_destino))
+                columnas_str = ",".join(columnas_destino)
+                placeholders = ",".join(["?"] * len(columnas_destino))
                 insert_query = f"INSERT INTO {tabla_dst} ({columnas_str}) VALUES ({placeholders})"
                 while True:
                     rows = cursor_orig.fetchmany(10_000)
@@ -94,12 +95,24 @@ class Hive_to_SQLserver(Migrador):
                     # rows = [[str(i) for i in list(row)] for row in rows]
                     cursor_dst.executemany(insert_query, rows)
                     dst.commit()
+                    logs.insert('end', f"[{datetime.now()}] Chunk de {len(rows):,} insertado\n")  # Añadir texto al final del widget Text.
+                    logs.yview('end')# Desplaza la vista del Text hacia el final para mostrar el nuevo texto.
 
-                return {"key": 0, "error": None}
+                logs.insert("end", f"[{datetime.now()}] MIGRACIÓN FINALIZADA\n")
+                logs.configure(fg_color="#26af00")
+                return
 
         except Exception as e:
             # Captura cualquier error y lo devuelve como parte del diccionario
-            return {"key": 3, "error": e}
+            logs.insert('end', f'[{datetime.now()}] Migración fallida\n\n{e}\n\n')
+            logs.configure(fg_color="#831616")
+            return
+        
+    def revisa_integridad(self) -> None:
+        """
+        Metodo que revisa la integridad de los datos migrados
+        """
+        pass
 
     def verifica_conexion(self) -> dict:
         """
