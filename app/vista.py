@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from tkinter import filedialog
-from typing import Tuple
+from subprocess import run
 
 class Vista(ctk.CTk):
     def __init__(self, controlador):
@@ -142,84 +142,39 @@ class Vista(ctk.CTk):
     
     def __button_migrador(self):
         self.controlador.migrar(self.query, self.table_dst.get().strip())
-        # match salida.get('key'):
-        #     case 1:
-        #         self.mostrar_aviso(f'Conexion fallida en origen\n\n{salida['error']}', 1)
-        #     case 2:
-        #         self.mostrar_aviso(f'Conexion fallida en destino\n\n{salida['error']}', 1)
-        #     case 3:
-        #         self.mostrar_aviso(f'Migración fallida\n\n{salida['error']}', 1)
-        #     case _:
-        #         pass
     
-    def __button_form_conexion(self, clave: str):
+    def __button_form_conexion(self, clave: str, mode: int):
+        self.clave = clave
         return ctk.CTkButton(
             self.contenedor_contenido,
-            text="Verifica conexion de ambos",
+            text='Check conexión' if mode == 0 else 'Programa',
             font=('Segoe UI', 14, 'bold'),
-            command=lambda: self.__full_credentials(clave)
+            command=lambda: self.__full_credentials(mode)
         )
     
-    def __full_credentials(self, clave: str):
-        datos_form = {
-            self.db_orig: 'Base de datos origen',
-            self.dns_orig: 'DNS origen',
-            self.db_dst: 'Base de datos destino',
-            self.dns_dst: 'DNS destino',
-            self.table_dst: 'Tabla destino'
-        }
-        if clave == 'hivexsql_server':
-            datos_form.pop(self.db_orig)
-        errores = [text for v, text in datos_form.items() if v.get().strip() == '']
-        if not self.query:
-            errores.append('Query')
-        if errores:
-            self.mostrar_aviso("Campos vacíos: " + ", ".join(errores), 1)
+    def __full_credentials(self, mode: int):
+        
+        valores = self.__get_parameters()
+        
+        if not valores:
             return
-        self.controlador.define_motores(clave)
-        datos_form = {
-            'usr_orig': self.usr_orig, 
-            'pwd_orig': self.pwd_orig,
-            'db_orig': self.db_orig,
-            'dns_orig': self.dns_orig,
-            'usr_dst': self.usr_dst,
-            'pwd_dst': self.pwd_dst,
-            'db_dst': self.db_dst,
-            'dns_dst': self.dns_dst
-        }
-        # Extraer los valores y asignar el nombre real de la variable
-        if clave=='sql_serverxsql_server':
-            valores = {
-                nombre: (
-                    campo.get().strip().replace(':', ',')
-                    if 'dns' in nombre
-                    else campo.get().strip()
-                )
-                for nombre, campo in datos_form.items()
-            }
-        else:
-            valores = {
-                nombre: (
-                    campo.get().strip().replace(':', ',')
-                    if 'dns_dst' in nombre
-                    else campo.get().strip()
-                )
-                for nombre, campo in datos_form.items()
-            }
 
         # Llamar a verifica_conexion con los nombres reales como parámetros
-        salida = self.controlador.verifica_conexion(**valores)
+        # salida = self.controlador.verifica_conexion(**valores)
+        salida = {'key': 0}
         match salida.get('key'):
             case 1:
                 self.mostrar_aviso(f'Conexion fallida en origen\n\n{salida['error']}', 1)
             case 2:
                 self.mostrar_aviso(f'Conexion fallida en destino\n\n{salida['error']}', 1)
             case _:
-                self.mostrar_aviso('Conexion exitosa', 0)
+                if mode == 0:
+                    self.mostrar_aviso('Conexion exitosa', 0)
+                else:
+                    self.mostrar_calendario()
 
     def mostrar_aviso(self, mensaje: str, type: int):
         popup = ctk.CTkToplevel(self)
-        color = None
         match type:
             case 1:
                 popup.title("Error")
@@ -280,6 +235,38 @@ class Vista(ctk.CTk):
         )
         boton_ok.pack(pady=(5, 15))
 
+    def mostrar_calendario(self):
+        popup = ctk.CTkToplevel(self)
+        popup.title("Logs")
+        popup.resizable(False, False)
+        popup.update_idletasks()
+
+        # Centrar popup en la pantalla
+        pantalla_ancho = popup.winfo_screenwidth()
+        pantalla_alto = popup.winfo_screenheight()
+        base_height = int(pantalla_alto * 0.4)
+        base_width = int(pantalla_ancho * 0.4)
+
+        x = (pantalla_ancho // 2) - (base_width // 2)
+        y = (pantalla_alto // 2) - (base_height // 2)
+
+        popup.geometry(f"{base_width}x{base_height}+{x}+{y}")
+        
+        popup.grab_set() 
+        
+            # ----- LABEL SUPERIOR -----
+        label_titulo = ctk.CTkLabel(
+            popup,
+            text="Programa la tarea",
+            font=('Segoe UI', 18, 'bold')
+        )
+        label_titulo.pack(side="top", pady=(15, 5))
+        
+        self.frame_calendario = ctk.CTkFrame(popup, fg_color=None, corner_radius=10)
+        self.frame_calendario.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.__combobox_periodo_callback('daily')
+    
     def mostrar_logs(self) -> ctk.CTkTextbox:
         popup = ctk.CTkToplevel(self)
         popup.title("Logs")
@@ -315,6 +302,146 @@ class Vista(ctk.CTk):
 
         return text_logs
 
+    def __combobox_periodo_callback(self, choice: str):
+        # Limpiar frame
+        self.__limpia_frame(self.frame_calendario)
+
+        # Configuración de columnas
+        self.frame_calendario.columnconfigure(0, weight=0)  # Labels
+        self.frame_calendario.columnconfigure(1, weight=1)  # Comboboxs principales
+
+        row_actual = 0
+
+        # ---------- PERIODO ----------
+        label_periodo = ctk.CTkLabel(self.frame_calendario, text="Periodo:")
+        label_periodo.grid(row=row_actual, column=0, padx=(10, 5), pady=10, sticky="w")
+
+        self.combobox_periodo = ctk.CTkComboBox(
+            self.frame_calendario,
+            values=['daily', 'weekly'],
+            command=self.__combobox_periodo_callback
+        )
+        self.combobox_periodo.grid(row=row_actual, column=1, padx=(5, 10), pady=10, sticky="ew")
+        self.combobox_periodo.set(choice)
+        row_actual += 1
+
+        # ---------- OPCIONES SEGÚN PERIODO ----------
+        match choice:
+            case 'daily':
+                label_info = ctk.CTkLabel(
+                    self.frame_calendario,
+                    text="Se ejecuta todos los días"
+                )
+                label_info.grid(row=row_actual, column=0, columnspan=2, pady=10)
+                row_actual += 1
+                
+                self.combobox_dia = None
+
+            case 'weekly':
+                label_dia = ctk.CTkLabel(self.frame_calendario, text="Día de la semana:")
+                label_dia.grid(row=row_actual, column=0, padx=(10, 5), pady=10, sticky="w")
+
+                self.combobox_dia = ctk.CTkComboBox(
+                    self.frame_calendario,
+                    values=['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+                )
+                self.combobox_dia.grid(row=row_actual, column=1, padx=(5, 10), pady=10, sticky="ew")
+                row_actual += 1
+
+        # ---------- HORA Y MINUTOS (MISMA FILA) ----------
+        label_hora = ctk.CTkLabel(self.frame_calendario, text="Hora:")
+        label_hora.grid(row=row_actual, column=0, padx=(10, 5), pady=10, sticky="w")
+
+        # Frame interno para hora y minuto
+        frame_hora = ctk.CTkFrame(self.frame_calendario)
+        frame_hora.grid(row=row_actual, column=1, padx=(5, 10), pady=10, sticky="w")
+        frame_hora.columnconfigure((0, 1), weight=0)
+
+        horas = [f"{h:02d}" for h in range(24)]
+        self.combobox_hora = ctk.CTkComboBox(
+            frame_hora,
+            values=horas,
+            width=70
+        )
+        self.combobox_hora.grid(row=0, column=0, padx=(0, 5))
+        self.combobox_hora.set("00")
+
+        minutos = [f"{m:02d}" for m in range(60)]
+        self.combobox_minuto = ctk.CTkComboBox(
+            frame_hora,
+            values=minutos,
+            width=70
+        )
+        self.combobox_minuto.grid(row=0, column=1)
+        self.combobox_minuto.set("00")
+        row_actual += 1
+
+        # ---------- BOTÓN ----------
+        boton_guardar = ctk.CTkButton(
+            self.frame_calendario,
+            text="Guardar programación",
+            command=self.__programa_tarea
+        )
+        boton_guardar.grid(row=row_actual, column=0, columnspan=2, pady=20)
+        # print(self.__get_parameters())
+        
+    def __programa_tarea(self):
+        if self.combobox_dia:
+            print('periodo:',self.combobox_periodo.get(),
+                '\ndia:',self.combobox_dia.get(),
+                '\nhora:',self.combobox_hora.get(),self.combobox_minuto.get())
+        else:
+            print('periodo:',self.combobox_periodo.get(),
+                '\nhora:',self.combobox_hora.get(),self.combobox_minuto.get())
+    
+    def __get_parameters(self) -> dict:
+        datos_form = {
+            self.db_orig: 'Base de datos origen',
+            self.dns_orig: 'DNS origen',
+            self.db_dst: 'Base de datos destino',
+            self.dns_dst: 'DNS destino',
+            self.table_dst: 'Tabla destino'
+        }
+        if self.clave == 'hivexsql_server':
+            datos_form.pop(self.db_orig)
+        errores = [text for v, text in datos_form.items() if v.get().strip() == '']
+        if not self.query:
+            errores.append('Query')
+        if errores:
+            self.mostrar_aviso("Campos vacíos: " + ", ".join(errores), 1)
+            return
+        self.controlador.define_motores(self.clave)
+        datos_form = {
+            'usr_orig': self.usr_orig, 
+            'pwd_orig': self.pwd_orig,
+            'db_orig': self.db_orig,
+            'dns_orig': self.dns_orig,
+            'usr_dst': self.usr_dst,
+            'pwd_dst': self.pwd_dst,
+            'db_dst': self.db_dst,
+            'dns_dst': self.dns_dst
+        }
+        # Extraer los valores y asignar el nombre real de la variable
+        if self.clave=='sql_serverxsql_server':
+            valores = {
+                nombre: (
+                    campo.get().strip().replace(':', ',')
+                    if 'dns' in nombre
+                    else campo.get().strip()
+                )
+                for nombre, campo in datos_form.items()
+            }
+        else:
+            valores = {
+                nombre: (
+                    campo.get().strip().replace(':', ',')
+                    if 'dns_dst' in nombre
+                    else campo.get().strip()
+                )
+                for nombre, campo in datos_form.items()
+            }
+        return valores
+    
     def __label_form(self, text: str, size: int) -> ctk.CTkLabel:
         return ctk.CTkLabel(
             self.contenedor_contenido,
@@ -416,8 +543,11 @@ class Vista(ctk.CTk):
         self.boton_archivo.grid(row=6, column=1, padx=10, pady=10)
         
         # Boton verificador de conexion
-        self.boton_verificador = self.__button_form_conexion(clave)
-        self.boton_verificador.grid(row=7, column=0, columnspan=2, padx=40, pady=40, sticky='nsew')
+        self.boton_verificador = self.__button_form_conexion(clave, 0)
+        self.boton_verificador.grid(row=7, column=0, columnspan=1, padx=40, pady=40, sticky='nsew')
+        
+        self.boton_programador = self.__button_form_conexion(clave, 1)
+        self.boton_programador.grid(row=7, column=1, columnspan=1, padx=40, pady=40, sticky='nsew')
         
         # Boton migrador
         self.boton_migrador = ctk.CTkButton(

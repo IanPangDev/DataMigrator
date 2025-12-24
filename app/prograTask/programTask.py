@@ -1,28 +1,27 @@
 import argparse
 from subprocess import run
-from os.path import exists
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import sessionmaker
 from Registro import Base, Registro
-
+from datetime import datetime
 
 def main():
     # Definir los argumentos que el script aceptará
     parser = argparse.ArgumentParser(description="Script de ejemplo que recibe argumentos")
-    parser.add_argument("--mode", type=int, help="Elimina o crea")
-    parser.add_argument("--name", type=str, help="nombre de la tarea")
-    parser.add_argument("--periodo", type=str, help="periodo de ejecucion")
-    parser.add_argument("--db_orig", type=str, help="base de datos origen") 
-    parser.add_argument("--db_dst", type=str, help="base de datos destino") 
-    parser.add_argument("--usr_orig", type=str, help="usuario del origen")
-    parser.add_argument("--usr_dst", type=str, help="usuario del destino")
-    parser.add_argument("--pwd_orig", type=str, help="password del origen")
-    parser.add_argument("--pwd_dst", type=str, help="password del destino")
-    parser.add_argument("--dns_orig", type=str, help="dns del origen")
-    parser.add_argument("--dns_dst", type=str, help="dns del destino")
-    parser.add_argument("--query_path", type=str, help="path de la query")
-    parser.add_argument("--tabla_dst", type=str, help="Tabla destino")
+    parser.add_argument("--mode", type=int, help="Elimina o crea", required=True)
+    parser.add_argument("--name", type=str, help="nombre de la tarea", required=True)
+    parser.add_argument("--periodo", type=str, help="periodo de ejecucion", required=True)
+    parser.add_argument("--db_orig", type=str, help="base de datos origen", required=True) 
+    parser.add_argument("--db_dst", type=str, help="base de datos destino", required=True) 
+    parser.add_argument("--usr_orig", type=str, help="usuario del origen", required=True)
+    parser.add_argument("--usr_dst", type=str, help="usuario del destino", required=True)
+    parser.add_argument("--pwd_orig", type=str, help="password del origen", required=True)
+    parser.add_argument("--pwd_dst", type=str, help="password del destino", required=True)
+    parser.add_argument("--dns_orig", type=str, help="dns del origen", required=True)
+    parser.add_argument("--dns_dst", type=str, help="dns del destino", required=True)
+    parser.add_argument("--query_path", type=str, help="path de la query", required=True)
+    parser.add_argument("--tabla_dst", type=str, help="Tabla destino", required=True)
 
     # Parsear
     args = parser.parse_args()
@@ -45,15 +44,20 @@ def main():
 
     # Base de datos
     db_path = "registros.db"
-    engine = create_engine(f"sqlite:///{db_path}", echo=True)
+    engine = create_engine(f"sqlite:///{db_path}", echo=False)
     Session = sessionmaker(bind=engine)
     session = Session()
+    logs = create_window_logs()
 
-    if not exists(db_path):
-        # Crear la BD
-        Base.metadata.create_all(engine)
+    # CREA LAS TABLAS SI NO EXISTEN
+    Base.metadata.create_all(engine)
 
-        print("Base de datos creada y registro insertado.")
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    logs = create_window_logs()
+
+    logs.insert('end', f'[{datetime.now()}] Base de datos creada y registro insertado.')
+    # print("Base de datos creada y registro insertado.")
 
     # Crear o eliminar tarea programada
     if args.mode == 0:
@@ -62,11 +66,12 @@ def main():
                 "schtasks", "/create",
                 "/tn", "MyTESTApp",
                 "/tr", "C:\\Users\\imss\\Desktop\\DataMigrator\\app\\prograTask\\task.bat",
-                "/sc", "daily", "/st", "11:45"
+                "/sc", "daily", "/st", "10:42"
             ],
             capture_output=True, text=True
         )
-        print(output.stdout)
+        logs.insert('end', f'[{datetime.now()}] {output.stdout}')
+        # print(output.stdout)
 
         # Crear registro con ORM (correcto)
         nuevo = Registro(name=args.name)
@@ -78,10 +83,12 @@ def main():
             {"name": args.name}
         ).fetchall()
         
-        print("Insertado:", result)
+        logs.insert('end', f'[{datetime.now()}] Insertado: {result}')
+        # print("Insertado:", result)
     else:
         output = run(["schtasks", "/delete", "/tn", "MyTESTApp", "/f"], capture_output=True, text=True)
-        print(output.stdout)
+        logs.insert('end', f'[{datetime.now()}] {output.stdout}')
+        # print(output.stdout)
 
         # SELECT seguro
         result = session.execute(
@@ -89,7 +96,8 @@ def main():
             {"name": args.name}
         ).fetchall()
 
-        print("ANTES DE BORRAR:", result)
+        logs.insert('end', f'[{datetime.now()}] ANTES DE BORRAR: {result}')
+        # print("ANTES DE BORRAR:", result)
 
         # DELETE seguro
         session.execute(
@@ -104,7 +112,8 @@ def main():
             {"name": args.name}
         ).fetchall()
 
-        print("DESPUÉS DE BORRAR:", result)
+        logs.insert('end', f'[{datetime.now()}] DESPUÉS DE BORRAR: {result}')
+        # print("DESPUÉS DE BORRAR:", result)
 
 
 if __name__ == "__main__":
