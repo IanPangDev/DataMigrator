@@ -71,7 +71,7 @@ class Oracle_to_SQLserver(Migrador):
             'db_dst': db_dst
         }
 
-    def migrar(self, query_select: str, tabla_dst: str, logs: CTkTextbox) -> None:
+    def migrar(self, query_select: str, tabla_dst: str, logs: CTkTextbox, create_tabla: bool) -> None:
         """
         Realiza la migración por lotes (batch) de 10,000 registros.
         """
@@ -108,10 +108,11 @@ class Oracle_to_SQLserver(Migrador):
 
                 cursor_orig.execute(query_select)
                 
-                cursor_dst.execute(create_table(tabla_dst, cursor_orig.description, self.mapper))
+                if create_tabla:
+                    cursor_dst.execute(create_table(tabla_dst, cursor_orig.description, self.mapper))
                 
-                logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
-                logs.yview('end')
+                    logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
+                    logs.yview('end')
                 
                 # Obtienes los nombres de las columnas directamente desde la query
                 columnas_destino = [desc[0].split('.')[-1] for desc in cursor_orig.description]

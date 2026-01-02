@@ -41,7 +41,7 @@ class SQLserver_to_SQLserver(Migrador):
             'db_dst': db_dst
         }
 
-    def migrar(self, query_select: str, tabla_dst: str, logs: CTkTextbox) -> None:
+    def migrar(self, query_select: str, tabla_dst: str, logs: CTkTextbox, create_tabla: bool) -> None:
         """
         Realiza la migración por lotes (batch) de 10,000 registros.
         """
@@ -78,15 +78,16 @@ class SQLserver_to_SQLserver(Migrador):
                 cursor_dst = dst.cursor()
                 cursor_dst.fast_executemany = True
 
-                cursor_orig.execute(f"EXEC sp_describe_first_result_set N'{query_select.replace('\'', '\'\'')}'")
-                description = []
-                for i in cursor_orig.fetchall():
-                    description.append([i[2], i[5], i[5], None, i[7], i[8], i[3]])
-                cursor_dst.execute(create_table(tabla_dst, description))
-                cursor_dst.commit()
+                if create_tabla:
+                    cursor_orig.execute(f"EXEC sp_describe_first_result_set N'{query_select.replace('\'', '\'\'')}'")
+                    description = []
+                    for i in cursor_orig.fetchall():
+                        description.append([i[2], i[5], i[5], None, i[7], i[8], i[3]])
+                    cursor_dst.execute(create_table(tabla_dst, description))
+                    cursor_dst.commit()
                 
-                logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
-                logs.yview('end')
+                    logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
+                    logs.yview('end')
                 
                 cursor_orig.execute(query_select)
                 

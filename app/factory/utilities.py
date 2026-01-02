@@ -1,11 +1,9 @@
-import re
-
 def create_table(table_name: str, columns: list, mapper: dict = None) -> str:
     sql_types = []
     for row in columns:
         dict_row = {c: data for c, data in zip(['name', 'type_code', 'data_length', 'internal_size', 'data_precision', 'data_scale', 'null_ok'], row)}
         if mapper:
-            dict_row['new_data_type'] = mapper[int(dict_row['type_code'])](dict_row)
+            dict_row['new_data_type'] = mapper[dict_row['type_code']](dict_row)
         sql_types.extend([dict_row])
     # Query para la creacion de la tabla en sql server
     query = f"CREATE TABLE {table_name} ("

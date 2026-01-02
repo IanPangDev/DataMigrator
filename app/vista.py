@@ -141,7 +141,7 @@ class Vista(ctk.CTk):
                 self.query = f.read()
     
     def __button_migrador(self):
-        self.controlador.migrar(self.query, self.table_dst.get().strip())
+        self.controlador.migrar(self.query, self.table_dst.get().strip(), self.table_create.get())
     
     def __button_form_conexion(self, clave: str, mode: int):
         self.clave = clave
@@ -525,6 +525,11 @@ class Vista(ctk.CTk):
         label_table_dst.grid(row=6, column=2, padx=10, pady=10, sticky='e')
         self.table_dst = self.__entry_form('Test')
         self.table_dst.grid(row=6, column=3, padx=10, pady=10)
+        self.table_create = ctk.CTkSwitch(
+            self.contenedor_contenido,
+            text='Create',
+            onvalue=True, offvalue=False)
+        self.table_create.grid(row=6, column=4, padx=10, pady=10)
         
         # Etiqueta para mostrar el nombre del archivo
         self.label_archivo = ctk.CTkLabel(
@@ -546,10 +551,10 @@ class Vista(ctk.CTk):
         
         # Boton verificador de conexion
         self.boton_verificador = self.__button_form_conexion(clave, 0)
-        self.boton_verificador.grid(row=7, column=0, columnspan=1, padx=40, pady=40, sticky='nsew')
+        self.boton_verificador.grid(row=7, column=0, columnspan=2, padx=40, pady=40, sticky='nsew')
         
-        self.boton_programador = self.__button_form_conexion(clave, 1)
-        self.boton_programador.grid(row=7, column=1, columnspan=1, padx=40, pady=40, sticky='nsew')
+        # self.boton_programador = self.__button_form_conexion(clave, 1)
+        # self.boton_programador.grid(row=7, column=1, columnspan=1, padx=40, pady=40, sticky='nsew')
         
         # Boton migrador
         self.boton_migrador = ctk.CTkButton(

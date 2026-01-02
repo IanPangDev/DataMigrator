@@ -92,7 +92,7 @@ class Hive_to_SQLserver(Migrador):
             'db_dst': db_dst
         }
 
-    def migrar(self, query_select: str, tabla_dst: str, logs: CTkTextbox) -> None:
+    def migrar(self, query_select: str, tabla_dst: str, logs: CTkTextbox, create_tabla: bool) -> None:
         """
         Realiza la migración por lotes (batch) de 10,000 registros.
         """
@@ -133,43 +133,44 @@ class Hive_to_SQLserver(Migrador):
 
                 cursor_orig.execute(query_select)
                 
-                # crear tabla
-                # =========================
-                # Obtener metadata JDBC
-                # =========================
-                meta = cursor_orig._rs.getMetaData()
-                num_cols = meta.getColumnCount()
+                if create_tabla:
+                    # crear tabla
+                    # =========================
+                    # Obtener metadata JDBC
+                    # =========================
+                    meta = cursor_orig._rs.getMetaData()
+                    num_cols = meta.getColumnCount()
 
-                jdbc_types = {}
-                for i in range(1, num_cols + 1):  # JDBC empieza en 1
-                    col_name = meta.getColumnName(i).lower()
-                    jdbc_types[col_name] = meta.getColumnTypeName(i)
+                    jdbc_types = {}
+                    for i in range(1, num_cols + 1):  # JDBC empieza en 1
+                        col_name = meta.getColumnName(i).lower()
+                        jdbc_types[col_name] = meta.getColumnTypeName(i)
 
-                # =========================
-                # Reemplazar tipos en cursor.description
-                # =========================
-                new_description = []
+                    # =========================
+                    # Reemplazar tipos en cursor.description
+                    # =========================
+                    new_description = []
 
-                for col in cursor_orig.description:
-                    name, type_code, display_size, internal_size, precision, scale, null_ok = col
+                    for col in cursor_orig.description:
+                        name, type_code, display_size, internal_size, precision, scale, null_ok = col
 
-                    true_type = jdbc_types.get(name.lower(), type_code)
+                        true_type = jdbc_types.get(name.lower(), type_code)
 
-                    new_description.append((
-                        name.split('.')[-1],          # nombre columna
-                        true_type,     # tipo REAL (JDBC/Hive)
-                        display_size,
-                        internal_size,
-                        precision,
-                        scale,
-                        null_ok
-                    ))
+                        new_description.append((
+                            name.split('.')[-1],          # nombre columna
+                            true_type,     # tipo REAL (JDBC/Hive)
+                            display_size,
+                            internal_size,
+                            precision,
+                            scale,
+                            null_ok
+                        ))
 
-                cursor_dst.execute(create_table(tabla_dst, new_description, self.mapper))
-                cursor_dst.commit()
-                
-                logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
-                logs.yview('end')
+                    cursor_dst.execute(create_table(tabla_dst, new_description, self.mapper))
+                    cursor_dst.commit()
+                    
+                    logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
+                    logs.yview('end')
                 
                 # Obtienes los nombres de las columnas directamente desde la query
                 columnas_destino = [desc[0].split('.')[-1] for desc in cursor_orig.description]

@@ -23,7 +23,7 @@ class Controlador:
         }
         self.factory = datos[clave]
 
-    def migrar(self, query_select: str, tabla_dst: str):
+    def migrar(self, query_select: str, tabla_dst: str, create_tabla: bool):
         # Mostrar ventana con logs
         logs = self.vista.mostrar_logs()
 
@@ -32,7 +32,7 @@ class Controlador:
         # -------------------------
         def migracion_hilo():
             logs.insert("end", f"[{datetime.now()}] MIGRACIÓN EMPEZADA a {tabla_dst}\n")
-            self.factory.migrar(query_select, tabla_dst, logs)
+            self.factory.migrar(query_select, tabla_dst, logs, create_tabla)
             logs.see("end")
 
         # Lanzar hilo
