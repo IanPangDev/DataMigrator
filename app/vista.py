@@ -84,7 +84,7 @@ class Vista(ctk.CTk):
         self.__plantilla_form("sql_serverxsql_server")
         
         # Etiqueta y campo para dns origen
-        label_dns_orig = self.__label_form("DNS:", 12)
+        label_dns_orig = self.__label_form("IP:", 12)
         label_dns_orig.grid(row=5, column=0, padx=10, pady=10, sticky='e')
         self.dns_orig = self.__entry_form('localhost:1433')
         self.dns_orig.grid(row=5, column=1, padx=10, pady=10)
@@ -123,7 +123,7 @@ class Vista(ctk.CTk):
         self.label_contenido.grid(row=0, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
         self.__plantilla_form("oraclexsql_server")
         # Etiqueta y campo para dns origen
-        label_dns_orig = self.__label_form("DNS:", 12)
+        label_dns_orig = self.__label_form("IP:", 12)
         label_dns_orig.grid(row=5, column=0, padx=10, pady=10, sticky='e')
         self.dns_orig = self.__entry_form('localhost:1521')
         self.dns_orig.grid(row=5, column=1, padx=10, pady=10)
@@ -160,7 +160,7 @@ class Vista(ctk.CTk):
             return
 
         # Llamar a verifica_conexion con los nombres reales como parámetros
-        # salida = self.controlador.verifica_conexion(**valores)
+        salida = self.controlador.verifica_conexion(**valores)
         salida = {'key': 0}
         match salida.get('key'):
             case 1:
@@ -450,13 +450,15 @@ class Vista(ctk.CTk):
             font=('Segoe UI', size, 'bold')
         )
     
-    def __entry_form(self, text: str = '', state: str = 'normal') -> ctk.CTkEntry:
+    def __entry_form(self, text: str = '', state: str = 'normal', password: bool = False) -> ctk.CTkEntry:
         entry = ctk.CTkEntry(
             self.contenedor_contenido,
             width=300,
             height=30
         )
         entry.insert(0, text)
+        if password:
+            entry.configure(show='*')
         entry.configure(state=state)
         return entry
 
@@ -478,7 +480,7 @@ class Vista(ctk.CTk):
         # Etiqueta y campo para Contraseña origen
         label_pwd_orig = self.__label_form('Contraseña:', 12)
         label_pwd_orig.grid(row=3, column=0, padx=10, pady=10, sticky='e')
-        self.pwd_orig = self.__entry_form()
+        self.pwd_orig = self.__entry_form(password=True)
         self.pwd_orig.grid(row=3, column=1, padx=10, pady=10)
 
         # Etiqueta y campo para Base de Datos de Origen
@@ -503,7 +505,7 @@ class Vista(ctk.CTk):
         # Etiqueta y campo para Contraseña destino
         label_pwd_dst = self.__label_form('Contraseña:', 12)
         label_pwd_dst.grid(row=3, column=2, padx=10, pady=10, sticky='e')
-        self.pwd_dst = self.__entry_form()
+        self.pwd_dst = self.__entry_form(password=True)
         self.pwd_dst.grid(row=3, column=3, padx=10, pady=10)
 
         # Etiqueta y campo para Base de Datos de destino
@@ -513,7 +515,7 @@ class Vista(ctk.CTk):
         self.db_dst.grid(row=4, column=3, padx=10, pady=10)
         
         # Etiqueta y campo para dns destino
-        label_dns_dst = self.__label_form('DNS:', 12)
+        label_dns_dst = self.__label_form('IP:', 12)
         label_dns_dst.grid(row=5, column=2, padx=10, pady=10, sticky='e')
         self.dns_dst = self.__entry_form('localhost:1433')
         self.dns_dst.grid(row=5, column=3, padx=10, pady=10)
