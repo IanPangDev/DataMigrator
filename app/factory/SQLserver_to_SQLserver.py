@@ -2,6 +2,8 @@ from app.factory.Migrador import Migrador
 import pyodbc
 from customtkinter import CTkTextbox
 from datetime import datetime
+from decimal import Decimal
+from app.factory.utilities import create_table
 
 class SQLserver_to_SQLserver(Migrador):
 
@@ -76,11 +78,21 @@ class SQLserver_to_SQLserver(Migrador):
                 cursor_dst = dst.cursor()
                 cursor_dst.fast_executemany = True
 
+                cursor_orig.execute(f"EXEC sp_describe_first_result_set N'{query_select.replace('\'', '\'\'')}'")
+                description = []
+                for i in cursor_orig.fetchall():
+                    description.append([i[2], i[5], i[5], None, i[7], i[8], i[3]])
+                cursor_dst.execute(create_table(tabla_dst, description))
+                cursor_dst.commit()
+                
+                logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
+                logs.yview('end')
+                
                 cursor_orig.execute(query_select)
                 
                 # Obtienes los nombres de las columnas directamente desde la query
                 columnas_destino = [f"[{desc[0]}]" for desc in cursor_orig.description]
-
+                
                 columnas_str = ",".join(columnas_destino)
                 placeholders = ",".join(["?"] * len(columnas_destino))
                 insert_query = f"INSERT INTO {tabla_dst} ({columnas_str}) VALUES ({placeholders})"

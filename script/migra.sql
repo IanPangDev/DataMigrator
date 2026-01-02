@@ -1,1 +1,3 @@
-SELECT * FROM test
+-- SELECT * FROM ejemplo_tipos_hive
+-- SELECT * FROM EJEMPLO_TIPOS_ORACLE
+SELECT * FROM TiposDeDatosSQLServer

@@ -3,6 +3,11 @@ import oracledb
 import pyodbc
 from customtkinter import CTkTextbox
 from datetime import datetime
+from app.factory.utilities import create_table
+from oracledb import DB_TYPE_CHAR, DB_TYPE_DATE, \
+    DB_TYPE_VARCHAR, DB_TYPE_NUMBER, \
+    DB_TYPE_NCHAR, DB_TYPE_NVARCHAR, \
+    DB_TYPE_TIMESTAMP
 
 class Oracle_to_SQLserver(Migrador):
 
@@ -13,6 +18,31 @@ class Oracle_to_SQLserver(Migrador):
         # mapa de credenciales
         self.credenciales = None
         oracledb.init_oracle_client(lib_dir='app\\factory\\drivers\\instantclient_23_9')
+        # mapper de conversiones
+        self.mapper = {
+            DB_TYPE_CHAR: lambda data: f"CHAR({data['data_length']})",
+            DB_TYPE_VARCHAR: lambda data: f"VARCHAR({data['data_length']})",
+
+            DB_TYPE_NCHAR: lambda data: f"NCHAR({data['data_length']})",
+            DB_TYPE_NVARCHAR: lambda data: f"NVARCHAR({data['data_length']})",
+
+            DB_TYPE_NUMBER: lambda data: (
+                "FLOAT"
+                if data["data_scale"] is not None and data["data_scale"] < 0
+                else (
+                    "INT"
+                    if data["data_scale"] == 0
+                    else (
+                        f"NUMERIC({data['data_precision']},{data['data_scale']})"
+                        if data["data_precision"] is not None and data["data_scale"] is not None
+                        else "NUMERIC"
+                    )
+                )
+            ),
+
+            DB_TYPE_DATE: lambda data: "DATETIME2",
+            DB_TYPE_TIMESTAMP: lambda data: "DATETIME2"
+        }
 
     def define_credenciales(self,
                             usr_orig: str,
@@ -77,6 +107,11 @@ class Oracle_to_SQLserver(Migrador):
                 cursor_dst.fast_executemany = True
 
                 cursor_orig.execute(query_select)
+                
+                cursor_dst.execute(create_table(tabla_dst, cursor_orig.description, self.mapper))
+                
+                logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
+                logs.yview('end')
                 
                 # Obtienes los nombres de las columnas directamente desde la query
                 columnas_destino = [desc[0].split('.')[-1] for desc in cursor_orig.description]

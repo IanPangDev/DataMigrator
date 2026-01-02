@@ -3,6 +3,8 @@ import jaydebeapi
 import pyodbc
 from customtkinter import CTkTextbox
 from datetime import datetime
+from app.factory.utilities import create_table
+import jpype
 
 class Hive_to_SQLserver(Migrador):
 
@@ -12,6 +14,56 @@ class Hive_to_SQLserver(Migrador):
         """
         # mapa de credenciales
         self.credenciales = None
+        
+        self.mapper = {
+            # ======================
+            # NUMÉRICOS
+            # ======================
+            "tinyint":   lambda d: "tinyint",
+            "smallint":  lambda d: "smallint",
+            "int":       lambda d: "int",
+            "integer":   lambda d: "int",
+            "bigint":    lambda d: "bigint",
+
+            "decimal": lambda d: (
+                f"decimal({d['data_precision']},{d['data_scale']})"
+                if d['data_precision'] else "decimal"
+            ),
+            "numeric": lambda d: (
+                f"numeric({d['data_precision']},{d['data_scale']})"
+                if d['data_precision'] else "numeric"
+            ),
+
+            "float":  lambda d: "float",
+            "double": lambda d: "float",
+            "real":   lambda d: "real",
+
+            # ======================
+            # BOOLEANOS
+            # ======================
+            "boolean": lambda d: "bit",
+
+            # ======================
+            # FECHAS
+            # ======================
+            "date": lambda d: "datetime2",
+
+            "timestamp": lambda d: "datetime2",
+
+            # ======================
+            # STRING
+            # ======================
+            "string": lambda d: "nvarchar(4000)",
+            "varchar": lambda d: (
+                f"varchar({d['data_length']})"
+                if d['data_length'] and d['data_length'] <= 8000
+                else "varchar(4000)"
+            ),
+            "char": lambda d: (
+                f"char({d['data_length']})"
+                if d['data_length'] else "char(1)"
+            )
+        }
 
     def define_credenciales(self,
                             usr_orig: str,
@@ -81,6 +133,44 @@ class Hive_to_SQLserver(Migrador):
 
                 cursor_orig.execute(query_select)
                 
+                # crear tabla
+                # =========================
+                # Obtener metadata JDBC
+                # =========================
+                meta = cursor_orig._rs.getMetaData()
+                num_cols = meta.getColumnCount()
+
+                jdbc_types = {}
+                for i in range(1, num_cols + 1):  # JDBC empieza en 1
+                    col_name = meta.getColumnName(i).lower()
+                    jdbc_types[col_name] = meta.getColumnTypeName(i)
+
+                # =========================
+                # Reemplazar tipos en cursor.description
+                # =========================
+                new_description = []
+
+                for col in cursor_orig.description:
+                    name, type_code, display_size, internal_size, precision, scale, null_ok = col
+
+                    true_type = jdbc_types.get(name.lower(), type_code)
+
+                    new_description.append((
+                        name.split('.')[-1],          # nombre columna
+                        true_type,     # tipo REAL (JDBC/Hive)
+                        display_size,
+                        internal_size,
+                        precision,
+                        scale,
+                        null_ok
+                    ))
+
+                cursor_dst.execute(create_table(tabla_dst, new_description, self.mapper))
+                cursor_dst.commit()
+                
+                logs.insert('end', f"[{datetime.now()}] Tabla creada exitosamente\n")  # Añadir texto al final del widget Text.
+                logs.yview('end')
+                
                 # Obtienes los nombres de las columnas directamente desde la query
                 columnas_destino = [desc[0].split('.')[-1] for desc in cursor_orig.description]
 
@@ -100,13 +190,34 @@ class Hive_to_SQLserver(Migrador):
 
                 logs.insert("end", f"[{datetime.now()}] MIGRACIÓN FINALIZADA\n")
                 logs.configure(fg_color="#26af00")
-                return
+                
 
         except Exception as e:
             # Captura cualquier error y lo devuelve como parte del diccionario
             logs.insert('end', f'[{datetime.now()}] Migración fallida\n\n{e}\n\n')
             logs.configure(fg_color="#831616")
-            return
+            
+        finally:
+                
+            try:
+                cursor_orig.close()
+            except:
+                pass
+
+            try:
+                cursor_dst.close()
+            except:
+                pass
+
+            try:
+                orig.close()
+            except:
+                pass
+
+            try:
+                dst.close()
+            except:
+                pass
         
     def revisa_integridad(self) -> None:
         """
@@ -122,7 +233,7 @@ class Hive_to_SQLserver(Migrador):
             {'key': 1 o 2, 'error': <mensaje>} en caso de error
         """
         try: 
-            jaydebeapi.connect(
+            conn_orig = jaydebeapi.connect(
                 "org.apache.hive.jdbc.HiveDriver",
                 self.credenciales['dns_orig'],
                 [
@@ -131,6 +242,7 @@ class Hive_to_SQLserver(Migrador):
                 ],
                 "app\\factory\\drivers\\hive-jdbc-uber-2.6.5.0-292.jar"
             )
+            conn_orig.close()
         except Exception as e:
             return {
                 'key':1,
